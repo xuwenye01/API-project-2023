@@ -4,13 +4,6 @@
 #define EMPTY (-1)
 #define MAXA 512
 
-typedef struct n{
-    int val;
-    struct n *next;
-}list_t;
-
-typedef list_t *ptr_node;
-
 typedef struct nodo{
     int val;
     struct nodo *prev;
@@ -77,7 +70,6 @@ int ricercaBinaria(const int *arr, int dim, int num);
 void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo);
 void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo);
 void freeList(ptr_nodo list);
-void freeSingleList(ptr_node list);
 stazione_t *minStazOf(stazione_t *stazione);
 
 /*codice
@@ -147,16 +139,6 @@ int ricercaBinaria(const int *arr, int dim, int num){
         }
     }
     return EMPTY;
-}
-
-void freeSingleList(ptr_node list){
-    ptr_node del;
-
-    while(list != NULL){
-        del = list;
-        list = list->next;
-        free(del);
-    }
 }
 
 void freeList(ptr_nodo list){
@@ -512,20 +494,21 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
 
 //PARTE DALL'INIZIO
 void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
-    int ok, ko;
-    stazione_t *partenza, *arrivo, *curr, *prec, *save, *minSave, *minCurr;
-    ptr_node head;
-    ptr_node list = NULL;
+    int ok, ko, ambiguo;
+    stazione_t *partenza, *arrivo, *curr, *prec, *pros, *save;
+    ptr_nodo head;
+    ptr_nodo list = NULL;
 
-    list = (list_t*) malloc(sizeof(list_t));
+    list = (lista_t*) malloc(sizeof(lista_t));
     if(list){
         list->val = 0;
         list->next = NULL;
 
         head = list;
         head->val = idPartenza;
-        head->next = (list_t*) malloc(sizeof(list_t));
+        head->next = (lista_t*) malloc(sizeof(lista_t));
         if (head->next != NULL) {
+            head->next->prev = head;
             head = head->next;
             head->next = NULL;
         }
@@ -536,11 +519,10 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
         if(partenza != NULL && arrivo != NULL && head != NULL){
             ok = 0;
             ko = 0;
+            ambiguo = 0;
             prec = partenza;
             save = partenza;
             curr = prec;
-            minSave = NULL;
-            minCurr = NULL;
 
             while(curr != NULL && !ok && !ko){
                 curr = treePredecessor(prec);
@@ -555,48 +537,9 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
                         printf("SAVE: %d\n", save->id);
                         printf("CURR: %d\n", curr->id);
 
-
-                        if((curr->id - curr->maxAut) <= (save->id - save->maxAut)){ //curr è il minimo con max autonomia nel pool
+                        if((curr->id - curr->maxAut) <= (save->id - save->maxAut) && curr->maxAut > 0){
                             save = curr;
                             printf("SAVE: %d\n", save->id);
-                        } else {
-
-                            if(curr->id - curr->maxAut <= idArrivo){
-                                save = curr;
-                                printf("SECONDO SAVE: %d\n", save->id);
-
-                            } else if((minStazOf(save)->id - minStazOf(save)->maxAut) <
-                                        (minStazOf(prec)->id - minStazOf(prec)->maxAut)){
-                                printf("ramo then caso incriminato\n");
-
-                                printf("SAVE: %d\n", save->id);
-                                printf("CURR: %d\n", curr->id);
-
-                                minSave = minStazOf(save);
-                                minCurr = minStazOf(curr);
-
-                                printf("MINSAVE: %d\n", minSave->id);
-                                printf("MINCURR: %d\n", minCurr->id);
-
-                                if(minStazOf(minCurr) != NULL && minStazOf(minSave) != NULL){
-                                    if(minStazOf(minCurr)->id - minStazOf(minCurr)->maxAut <=
-                                        (minStazOf(minSave)->id - minStazOf(minSave)->maxAut)){
-                                        printf("minCurr ha un figlio più lontano di minSave\n");
-                                        save = curr;
-                                        printf("CURR: %d\n", curr->id);
-
-                                    } else {
-                                        printf("minCurr NON ha un figlio più lontano di minSave\n");
-                                        curr = treePredecessor(curr);
-                                    }
-                                } else {
-                                    printf("i figli di minCurr o minSave sono NULL\n");
-                                    save = curr;
-                                }
-                            } else {
-                                printf("save fa meno strada di prec\n");
-                                save = curr;
-                            }
                         }
 
                         curr = treePredecessor(curr);
@@ -605,8 +548,9 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
                             if (save->id - save->maxAut <= arrivo->id && prec->id - prec->maxAut > curr->id) {
 
                                 head->val = save->id;
-                                head->next = (list_t *) malloc(sizeof(list_t));
+                                head->next = (lista_t *) malloc(sizeof(lista_t));
                                 if (head->next != NULL) {
+                                    head->next->prev = head;
                                     head = head->next;
                                     head->next = NULL;
                                 }
@@ -619,13 +563,26 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
 
                     if(curr == treePredecessor(prec)){
                         ko = 1;
+                        printf("PRIMO KO AL CURR: %d\n", curr->id);
+                    }
+
+                    //metto la prima condizione per evitare il problema dell'open 10
+                    if(curr != arrivo && save == prec){
+                        ko = 1;
+                        printf("SECONDO KO AL CURR: %d\n", curr->id);
                     }
 
                     if(curr != arrivo){
+
+                        if(save != minStazOf(prec)){
+                            ambiguo = 1;
+                        }
+
                         head->val = save->id;
                         printf("-----------VALORE IN HEAD: %d\n", head->val);
-                        head->next = (list_t*) malloc(sizeof(list_t));
+                        head->next = (lista_t*) malloc(sizeof(lista_t));
                         if (head->next != NULL) {
+                            head->next->prev = head;
                             head = head->next;
                             head->next = NULL;
                         }
@@ -639,14 +596,10 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
                     if(curr->id == arrivo->id){
 
                         head->val = curr->id;
-                        head->next = (list_t*) malloc(sizeof(list_t));
-                        if (head->next != NULL) {
-                            head = head->next;
-                            head->next = NULL;
-                        }
 
                         ok = 1;
                         printf("OK, ARRIVATO ALLA FINE\n");
+                        printf("KO = %d\n", ko);
                     }
                 }
             }
@@ -654,8 +607,38 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
             if(ok && !ko){
                 printf("ook = 1\n");
 
+                if(ambiguo){
+                    printf("AMBIGUITA' PRESENTE\n");
+
+                    printf("HEAD: %d\n", head->val);
+                    printf("HEAD PREV: %d\n", head->prev->val);
+                    printf("HEAD PREV PREV: %d\n", head->prev->prev->val);
+
+                    while(head && head->prev && head->prev->prev){
+                        prec = treeSearch(stazione, head->val);
+                        save = treeSearch(stazione, head->prev->val);
+                        pros = treeSearch(stazione, head->prev->prev->val);
+
+                        curr = treePredecessor(save);
+
+                        printf("PREC: %d\n", prec->id);
+                        printf("CURR: %d\n", curr->id);
+                        printf("PROS: %d\n", pros->id);
+
+                        while(curr->id >= (pros->id - pros->maxAut) && (curr->id - curr->maxAut <= prec->id)){
+                            if(curr->id < save->id){
+                                save = curr;
+                            }
+                            curr = treePredecessor(curr);
+                        }
+
+                        head->prev->val = save->id;
+                        head = head->prev;
+                    }
+                }
+
                 head = list;
-                while (head->next->next != NULL) { //stampa le stazioni attraversate a partire dall'inizio'
+                while (head->next != NULL) { //stampa le stazioni attraversate a partire dall'inizio'
                     printf("%d ", head->val);
                     head = head->next;
                 }
@@ -666,10 +649,10 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
         } else {
             printf("nessun percorso\n");
         }
-        freeSingleList(list);
+        freeList(list);
         list = NULL;
     } else {
-        printf(("errore malloc"));
+        printf(("errore malloc\n"));
     }
 }
 
