@@ -19,11 +19,11 @@ typedef struct node{
     struct node *father;
     int maxAut;
     int numAut;
-    int autonomie[MAXA];
-}stazione_t;
+    int autonomies[MAXA];
+}station_t;
 
-stazione_t *root;
-stazione_t *NIL;
+station_t *root;
+station_t *NIL;
 
 /*funzioni bst
  *
@@ -31,12 +31,13 @@ stazione_t *NIL;
  *
  * */
 
-stazione_t *createTree(int distanza, int numAuto, const int *parcoAuto);
-stazione_t *treeMinimum(stazione_t *x);
-stazione_t *treeMaximum(stazione_t *x);
-stazione_t *treePredecessor(stazione_t *x);
-stazione_t *treeSuccessor(stazione_t *x);
-stazione_t *treeSearch(stazione_t *n, int distanza);
+station_t *createTree(int distanza, int numAuto, const int *parcoAuto);
+station_t *treeMinimum(station_t *x);
+station_t *treeMaximum(station_t *x);
+station_t *treePredecessor(station_t *x);
+station_t *treeSearch(station_t *n, int distance);
+station_t *freeBST(station_t *node);
+void freeNodes(station_t *node);
 
 /*funzioni quicksort
  *
@@ -45,7 +46,7 @@ stazione_t *treeSearch(stazione_t *n, int distanza);
  * */
 
 void swap(int *x, int *y);
-int partition(int *arr, int min, int r);
+int partition(int *arr, int min, int max);
 void quickSort(int *arr, int inf, int sup);
 
 /*funzioni della specifica
@@ -54,11 +55,11 @@ void quickSort(int *arr, int inf, int sup);
  *
  * */
 
-void aggiungiStazione(stazione_t *T, int distanza, int numAuto, const int *parcoAuto);
-void demolisciStazione(stazione_t *T, int idStazione);
-void aggiungiAuto(stazione_t *T, int idStazione, int autonomia);
-void rottamaAuto(stazione_t *T, int idStazione, int autonomia);
-void pianificaPercorso(stazione_t *stazione, int idPartenza, int idArrivo);
+void aggiungiStazione(station_t *T, int distance, int numAuto, const int *parkAuto);
+void demolisciStazione(station_t *T, int stationId);
+void aggiungiAuto(station_t *T, int stationId, int autonomy);
+void rottamaAuto(station_t *T, int stationId, int autonomy);
+void pianificaPercorso(station_t *station, int startPoint, int endPoint);
 
 /*funzioni custom
  *
@@ -66,11 +67,12 @@ void pianificaPercorso(stazione_t *stazione, int idPartenza, int idArrivo);
  *
  * */
 
-int ricercaBinaria(const int *arr, int dim, int num);
-void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo);
-void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo);
+int binarySearch(const int *arr, int dim, int num);
+void pianificaDiretto(station_t *station, int startPoint, int endPoint);
+void pianificaInverso(station_t *station, int startPoint, int endPoint);
 void freeList(ptr_nodo list);
-stazione_t *minStazOf(stazione_t *stazione);
+station_t *minStazOf(station_t *station);
+void transplant(station_t *T, station_t *u, station_t *v);
 
 /*codice
  *
@@ -86,7 +88,7 @@ void swap(int *x, int *y){
     *y = tmp;
 }
 
-int partition (int *arr,int min, int max){
+int partition (int *arr, int min, int max){
     int x=arr[min];
     int i=min-1;
     int j=max+1;
@@ -110,31 +112,24 @@ void quickSort(int *arr, int inf, int sup){
     if(arr){
         if(inf < sup){
             int pivot = partition(arr, inf, sup);
-            //printf("pivot = %d", pivot);
             quickSort(arr, inf, pivot);
             quickSort(arr, pivot+1, sup);
         }
     }
 }
 
-int ricercaBinaria(const int *arr, int dim, int num){
+int binarySearch(const int *arr, int dim, int num){
     int min, max, mid;
 
     min = 0;
     max = dim - 1;
     while(min <= max){
         mid = min + (max - min)/2;
-        /*printf("mid = %d\n", mid);
-        printf("arr[mid] = %d\n", arr[mid]);*/
-
         if(arr[mid] == num){
-            //printf("%d uguale a %d\n", arr[mid], num);
             return mid;
         } else if (arr[mid] < num){
-            //printf("%d minore a %d\n", arr[mid], num);
             max = mid - 1;
         } else {
-            //printf("%d maggiore a %d\n", arr[mid], num);
             min = mid + 1;
         }
     }
@@ -151,39 +146,70 @@ void freeList(ptr_nodo list){
     }
 }
 
-stazione_t *minStazOf(stazione_t *stazione){ //minima stazione che un nodo raggiunge
-    stazione_t *curr = NULL;
-    curr = treePredecessor(stazione);
+station_t *minStazOf(station_t *station){ //minima station che un nodo raggiunge
+    station_t *curr = NULL;
+    curr = treePredecessor(station);
 
-    if(stazione){
-        while(curr != NULL && stazione->id - stazione->maxAut < curr->id){
+    if(station){
+        while(curr != NULL && station->id - station->maxAut < curr->id){
             curr = treePredecessor(curr);
         }
     }
     return curr;
 }
 
-stazione_t *createTree(int distanza, int numAuto, const int *parcoAuto){
-    stazione_t *stazione = NULL;
+void transplant(station_t *T, station_t *u, station_t *v){
+    if(u->father == NIL){
+        root = v;
+    } else if(u == u->father->left){
+        u->father->left = v;
+    } else {
+        u->father->right = v;
+    }
+    if(v != NIL){
+        v->father = u->father;
+    }
+}
 
-    stazione = (stazione_t*)malloc(sizeof(stazione_t));
+void freeNodes(station_t *node) {
+    if (node != NIL) {
+        freeNodes(node->left);
+        freeNodes(node->right);
+        free(node);
+    }
+}
 
-    if(stazione){
+station_t *freeBST(station_t *node) {
+    if (node != NIL) {
+        node->left = freeBST(node->left);
+        node->right = freeBST(node->right);
+        free(node);
+    }
+    return NIL;
+}
 
-        stazione->father = NIL;
-        stazione->id = distanza;
-        stazione->left = NIL;
-        stazione->right = NIL;
-        stazione->maxAut = 0;
-        stazione->numAut = numAuto;
+station_t *createTree(int distanza, int numAuto, const int *parcoAuto){
+    station_t *station = NULL;
+
+    station = (station_t*)malloc(sizeof(station_t));
+
+    if(station){
+
+        station->father = NIL;
+        station->id = distanza;
+        station->left = NIL;
+        station->right = NIL;
+        station->maxAut = 0;
+        station->numAut = numAuto;
+
         for(int j=0; j<MAXA; j++){
-            stazione->autonomie[j] = EMPTY;
+            station->autonomies[j] = EMPTY;
         }
 
         for(int i=0; i<numAuto; i++){
-            stazione->autonomie[i] = parcoAuto[i];
-            if(parcoAuto[i] > stazione->maxAut){
-                stazione->maxAut = parcoAuto[i]; //per salvare l'auto con autonomia max
+            station->autonomies[i] = parcoAuto[i];
+            if(parcoAuto[i] > station->maxAut){
+                station->maxAut = parcoAuto[i]; //to save the max autonomy
             }
         }
 
@@ -191,28 +217,28 @@ stazione_t *createTree(int distanza, int numAuto, const int *parcoAuto){
         printf("errore malloc\n");
         return 0;
     }
-    return stazione;
+    return station;
 }
 
-stazione_t *treeMinimum(stazione_t *x){
+station_t *treeMinimum(station_t *x){
     while(x->left != NIL){
         x = x->left;
     }
     return x;
 }
 
-stazione_t *treeMaximum(stazione_t *x){
+station_t *treeMaximum(station_t *x){
     while(x->right != NIL){
         x = x->right;
     }
     return x;
 }
 
-stazione_t *treePredecessor(stazione_t *x){
+station_t *treePredecessor(station_t *x){
     if(x->left != NIL){
         return treeMaximum(x->left);
     }
-    stazione_t *y = x->father;
+    station_t *y = x->father;
     while(y != NIL && x == y->left){
         x = y;
         y = y->father;
@@ -220,78 +246,67 @@ stazione_t *treePredecessor(stazione_t *x){
     return y;
 }
 
-stazione_t *treeSuccessor(stazione_t *x){
-    if(x->right != NIL){
-        return treeMinimum(x->right);
+station_t *treeSearch(station_t *n, int distance){
+
+    if(n == NIL || n->id == distance) return n;
+    if(distance < n->id) {
+        return treeSearch(n->left, distance);
     }
-    stazione_t *y = x->father;
-    while(y != NIL && x == y->right){
-        x = y;
-        y = y->father;
-    }
-    return y;
+    return treeSearch(n->right, distance);
 }
 
-stazione_t *treeSearch(stazione_t *n, int distanza){
+void aggiungiStazione(station_t *T, int distance, int numAuto, const int *parkAuto){
+    station_t *prev = NIL;
+    station_t *curr = root;
 
-    if(n == NIL || n->id == distanza) return n;
-    if(distanza < n->id) {
-        return treeSearch(n->left, distanza);
-    }
-    return treeSearch(n->right, distanza);
-}
+    if(treeSearch(T, distance) == NULL){ //aggiunge se non lo trova
+        station_t *station = NULL;
+        station = (station_t*)malloc(sizeof(station_t));
 
-void aggiungiStazione(stazione_t *T, int distanza, int numAuto, const int *parcoAuto){
-    stazione_t *prev = NIL;
-    stazione_t *curr = root;
-
-    if(treeSearch(T, distanza) == NULL){ //aggiunge se non lo trova
-        stazione_t *stazione = NULL;
-        stazione = (stazione_t*)malloc(sizeof(stazione_t));
-
-        if(stazione){
+        if(station){
             if(T == NIL){
-                stazione->father = NIL;
+                station->father = NIL;
             }
-            stazione->id = distanza;
-            stazione->left = NIL;
-            stazione->right = NIL;
-            stazione->maxAut = 0;
-            stazione->numAut = numAuto;
+            station->id = distance;
+            station->left = NIL;
+            station->right = NIL;
+            station->maxAut = 0;
+            station->numAut = numAuto;
+
             for(int j=0; j<MAXA; j++){
-                stazione->autonomie[j] = EMPTY;
+                station->autonomies[j] = EMPTY;
             }
 
             for(int i=0; i<numAuto; i++){
-                stazione->autonomie[i] = parcoAuto[i];
-                if(parcoAuto[i] > stazione->maxAut){
-                    stazione->maxAut = parcoAuto[i]; //per salvare l'auto con autonomia max
+                station->autonomies[i] = parkAuto[i];
+                if(parkAuto[i] > station->maxAut){
+                    station->maxAut = parkAuto[i]; //per salvare l'auto con autonomia max
                 }
             }
 
             while(curr != NIL) {
                 prev = curr;
-                if (stazione->id < curr->id) {
+                if (station->id < curr->id) {
                     curr = curr->left;
                 } else {
                     curr = curr->right;
                 }
             }
 
-            stazione->father = prev;
+            station->father = prev;
 
             if(prev == NIL){
-                root = stazione;
-            } else if(stazione->id < prev->id){
-                prev->left = stazione;
+                root = station;
+            } else if(station->id < prev->id){
+                prev->left = station;
             } else {
-                prev->right = stazione;
+                prev->right = station;
             }
 
-            if(treeSearch(T, stazione->id)){
-                printf("aggiunta %d\n", stazione->id);
+            if(treeSearch(T, station->id)){
+                printf("aggiunta\n");
             } else {
-                printf("non aggiunta %d\n",stazione->id);
+                printf("non aggiunta\n");
             }
         } else {
             printf("errore malloc\n");
@@ -301,50 +316,48 @@ void aggiungiStazione(stazione_t *T, int distanza, int numAuto, const int *parco
     }
 }
 
-void demolisciStazione(stazione_t *T, int idStazione){
-    stazione_t *figli, *del, *z;
+void demolisciStazione(station_t *T, int stationId){
+    station_t *z, *y;
 
-    z = treeSearch(T, idStazione);
+    z = treeSearch(T, stationId);
     if(z){
-        if(z->left == NIL || z->right == NIL){
-            del = z;
-        } else del = treeSuccessor(z);
-        if(del->left != NIL){
-            figli = del->left;
-        } else figli = del->right;
-        if(figli != NIL){
-            figli->father = del->father;
-        }
-        if(del->father == NIL){
-            root = figli;
-        } else if(del == del->father->left){
-            del->father->left = figli;
+
+        if(z->left == NIL){
+            transplant(T, z, z->right);
+        } else if(z->right == NIL){
+            transplant(T, z, z->left);
         } else {
-            del->father->right = figli;
+            y = treeMinimum(z->right);
+            if(y->father != z){
+                transplant(T, y, y->right);
+                y->right = z->right;
+                y->right->father = y;
+            }
+            transplant(T, z, y);
+            y->left = z->left;
+            y->left->father = y;
         }
-        if(del != z){
-            z->id = del->id;
-        }
-        free(del);
+
+        free(z);
         printf("demolita\n");
     } else {
         printf("non demolita\n");
     }
 }
 
-void aggiungiAuto(stazione_t *T, int idStazione, int autonomia){
+void aggiungiAuto(station_t *T, int stationId, int autonomy){
     int i, flag = 0;
-    stazione_t *stazione;
+    station_t *station;
 
-    stazione = treeSearch(T, idStazione);
-    if(stazione){
+    station = treeSearch(T, stationId);
+    if(station){
         for(i=0; i < MAXA; i++){
-            if(stazione->autonomie[i] == EMPTY){
-                stazione->autonomie[i] = autonomia;
-                stazione->numAut++;
+            if(station->autonomies[i] == EMPTY){
+                station->autonomies[i] = autonomy;
+                station->numAut++;
                 flag = 1;
-                if(autonomia > stazione->maxAut){ //aggiorno l'autonomia max
-                    stazione->maxAut = autonomia;
+                if(autonomy > station->maxAut){ //aggiorno l'autonomy max
+                    station->maxAut = autonomy;
                 }
                 printf("aggiunta\n");
                 break;
@@ -358,40 +371,32 @@ void aggiungiAuto(stazione_t *T, int idStazione, int autonomia){
     }
 }
 
-void rottamaAuto(stazione_t *T, int idStazione, int autonomia){
+void rottamaAuto(station_t *T, int stationId, int autonomy){
     int i;
-    stazione_t *stazione;
+    station_t *station;
 
-    stazione = treeSearch(T, idStazione);
-    if(stazione){
+    station = treeSearch(T, stationId);
+    if(station){
 
-        /*for(int j = 0; j<MAXA; j++){
-            printf("%d ", stazione->autonomie[j]);
-        }
-        printf("\n");*/
+        quickSort(station->autonomies, 0, MAXA - 1);
 
-        quickSort(stazione->autonomie, 0, MAXA-1);
-
-        /*for(int j = 0; j<MAXA; j++){
-            printf("%d ", stazione->autonomie[j]);
-        }
-        printf("\n");*/
-
-        i = ricercaBinaria(stazione->autonomie, MAXA, autonomia);
-
-        if(i >= 0 && i < MAXA){
-            stazione->autonomie[i] = EMPTY;
-            stazione->numAut--;
-            if(stazione->numAut == 0){
-                stazione->maxAut = 0;
-            } else {
-                if(i == 0){
-                    stazione->maxAut = stazione->autonomie[i+1];
-                }
-            }
+        if(autonomy == station->maxAut){
+            station->autonomies[0] = EMPTY;
+            station->maxAut = station->autonomies[1];
+            station->numAut--;
             printf("rottamata\n");
         } else {
-            printf("non rottamata\n");
+            i = binarySearch(station->autonomies, MAXA, autonomy);
+            if (i >= 0 && i < MAXA) {
+                station->autonomies[i] = EMPTY;
+                station->numAut--;
+                if (station->numAut == 0) {
+                    station->maxAut = 0;
+                }
+                printf("rottamata\n");
+            } else {
+                printf("non rottamata\n");
+            }
         }
     } else {
         printf("non rottamata\n");
@@ -399,9 +404,9 @@ void rottamaAuto(stazione_t *T, int idStazione, int autonomia){
 }
 
 //PARTE DALLA FINE
-void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
+void pianificaDiretto(station_t *station, int startPoint, int endPoint){
     int minStaz, ok, ko;
-    stazione_t *partenza, *arrivo, *curr, *prec, *save;
+    station_t *start, *end, *curr, *prec, *save;
     ptr_nodo head;
     ptr_nodo list = NULL;
 
@@ -412,7 +417,7 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
         list->prev = NULL;
 
         head = list;
-        head->val = idArrivo;
+        head->val = endPoint;
         head->next = (lista_t*) malloc(sizeof(lista_t));
         if (head->next != NULL) {
             head->next->prev = head;
@@ -420,23 +425,28 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
             head->next = NULL;
         }
 
-        partenza = treeSearch(stazione, idPartenza);
-        arrivo = treeSearch(stazione, idArrivo);
+        start = treeSearch(station, startPoint);
+        end = treeSearch(station, endPoint);
 
-        if(partenza != NULL && arrivo != NULL){
+        if(start != NULL && end != NULL){
             ko = 0;
             ok = 0;
-            prec = arrivo;
-            save = arrivo;
+            prec = end;
+            save = end;
             curr = prec;
-            minStaz = partenza->id;
+            minStaz = start->id;
 
             while(curr != NULL && !ok && !ko){
                 curr = treePredecessor(prec);
 
+                if(start->maxAut <= 0){
+                    ko = 1;
+                    break;
+                }
+
                 while(curr != NULL){
 
-                    if(curr->id == partenza->id && curr->maxAut > 0){
+                    if(curr->id == start->id && curr->maxAut > 0){
                         if(curr->id + curr->maxAut < prec->id){
                             if(save == prec){
                                 ko = 1;
@@ -455,13 +465,13 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
                                 prec = save;
                                 curr = prec;
                             }
-                        } else { //curr (che è partenza) raggiunge prec
-                            head->val = idPartenza;
+                        } else { //curr (which equals start) reaches prec
+                            head->val = startPoint;
                             ok = 1;
                             break;
                         }
-                    } else { //stazione intermedia
-                        if(curr->id + curr->maxAut >= prec->id) { //raggiunge la stazione dopo
+                    } else {
+                        if(curr->id + curr->maxAut >= prec->id) {
                             if (curr->id < save->id && curr->maxAut != 0) {
                                 minStaz = curr->id;
                                 save = curr;
@@ -473,7 +483,7 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
             }
 
             if(ok){
-                do{ //stampa le stazioni attraversate a partire dalla fine
+                do{ //prints out the stations starting from the end
                     printf("%d ", head->val);
                     head = head->prev;
                 }while(head->prev != NULL);
@@ -483,7 +493,7 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
                 printf("nessun percorso\n");
             }
         } else {
-            printf("nessun percorso\n");
+            printf("nessun percorso perché non trovo start o end\n");
         }
         freeList(list);
         list = NULL;
@@ -493,19 +503,20 @@ void pianificaDiretto(stazione_t *stazione, int idPartenza, int idArrivo){
 }
 
 //PARTE DALL'INIZIO
-void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
+void pianificaInverso(station_t *station, int startPoint, int endPoint){
     int ok, ko, ambiguo;
-    stazione_t *partenza, *arrivo, *curr, *prec, *pros, *save;
+    station_t *start, *end, *curr, *prec, *pros, *save;
     ptr_nodo head;
     ptr_nodo list = NULL;
 
     list = (lista_t*) malloc(sizeof(lista_t));
+
     if(list){
         list->val = 0;
         list->next = NULL;
 
         head = list;
-        head->val = idPartenza;
+        head->val = startPoint;
         head->next = (lista_t*) malloc(sizeof(lista_t));
         if (head->next != NULL) {
             head->next->prev = head;
@@ -513,39 +524,37 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
             head->next = NULL;
         }
 
-        partenza = treeSearch(stazione, idPartenza);
-        arrivo = treeSearch(stazione, idArrivo);
+        start = treeSearch(station, startPoint);
+        end = treeSearch(station, endPoint);
 
-        if(partenza != NULL && arrivo != NULL && head != NULL){
+        if(start != NULL && end != NULL && head != NULL){
             ok = 0;
             ko = 0;
             ambiguo = 0;
-            prec = partenza;
-            save = partenza;
+            prec = start;
+            save = start;
             curr = prec;
 
             while(curr != NULL && !ok && !ko){
                 curr = treePredecessor(prec);
 
+                if(start->maxAut <= 0){
+                    ko = 1;
+                    break;
+                }
+
                 while(curr != NULL && !ok && !ko){
-                    printf("2° WHILE: id CURR: %d maxAut CURR: %d\n", curr->id, curr->maxAut);
-                    printf("maxAut PREC = %d\n", prec->maxAut);
 
                     while(prec->id - prec->maxAut <= curr->id){
-                        printf("3° WHILE: id prec - maxAut PREC = %d\n", prec->id-prec->maxAut);
-                        printf("PREC: %d\n", prec->id);
-                        printf("SAVE: %d\n", save->id);
-                        printf("CURR: %d\n", curr->id);
 
                         if((curr->id - curr->maxAut) <= (save->id - save->maxAut) && curr->maxAut > 0){
                             save = curr;
-                            printf("SAVE: %d\n", save->id);
                         }
 
                         curr = treePredecessor(curr);
 
-                        if(curr->id == arrivo->id) {
-                            if (save->id - save->maxAut <= arrivo->id && prec->id - prec->maxAut > curr->id) {
+                        if(curr->id == end->id) {
+                            if (save->id - save->maxAut <= end->id && prec->id - prec->maxAut > curr->id) {
 
                                 head->val = save->id;
                                 head->next = (lista_t *) malloc(sizeof(lista_t));
@@ -563,23 +572,20 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
 
                     if(curr == treePredecessor(prec)){
                         ko = 1;
-                        printf("PRIMO KO AL CURR: %d\n", curr->id);
                     }
 
                     //metto la prima condizione per evitare il problema dell'open 10
-                    if(curr != arrivo && save == prec){
+                    if(curr != end && save == prec){
                         ko = 1;
-                        printf("SECONDO KO AL CURR: %d\n", curr->id);
                     }
 
-                    if(curr != arrivo){
+                    if(curr != end){
 
                         if(save != minStazOf(prec)){
                             ambiguo = 1;
                         }
 
                         head->val = save->id;
-                        printf("-----------VALORE IN HEAD: %d\n", head->val);
                         head->next = (lista_t*) malloc(sizeof(lista_t));
                         if (head->next != NULL) {
                             head->next->prev = head;
@@ -587,46 +593,32 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
                             head->next = NULL;
                         }
                         prec = save;
-                        printf("PREC: %d\n", prec->id);
-                        printf("SAVE: %d\n", save->id);
                         curr = treePredecessor(prec);
-                        printf("CURR: %d\n", curr->id);
                     }
 
-                    if(curr->id == arrivo->id){
-
-                        head->val = curr->id;
-
-                        ok = 1;
-                        printf("OK, ARRIVATO ALLA FINE\n");
-                        printf("KO = %d\n", ko);
+                    if(curr->id == end->id){
+                        if(save->id - save->maxAut <= end->id){
+                            head->val = curr->id;
+                            ok = 1;
+                        } else {
+                            ko = 1;
+                        }
                     }
                 }
             }
 
             if(ok && !ko){
-                printf("ook = 1\n");
-
                 if(ambiguo){
-                    printf("AMBIGUITA' PRESENTE\n");
-
-                    printf("HEAD: %d\n", head->val);
-                    printf("HEAD PREV: %d\n", head->prev->val);
-                    printf("HEAD PREV PREV: %d\n", head->prev->prev->val);
 
                     while(head && head->prev && head->prev->prev){
-                        prec = treeSearch(stazione, head->val);
-                        save = treeSearch(stazione, head->prev->val);
-                        pros = treeSearch(stazione, head->prev->prev->val);
+                        prec = treeSearch(station, head->val);
+                        save = treeSearch(station, head->prev->val);
+                        pros = treeSearch(station, head->prev->prev->val);
 
                         curr = treePredecessor(save);
 
-                        printf("PREC: %d\n", prec->id);
-                        printf("CURR: %d\n", curr->id);
-                        printf("PROS: %d\n", pros->id);
-
-                        while(curr->id >= (pros->id - pros->maxAut) && (curr->id - curr->maxAut <= prec->id)){
-                            if(curr->id < save->id){
+                        while(curr->id > (pros->id - pros->maxAut)){
+                            if((curr->id - curr->maxAut) <= prec->id){
                                 save = curr;
                             }
                             curr = treePredecessor(curr);
@@ -656,72 +648,73 @@ void pianificaInverso(stazione_t *stazione, int idPartenza, int idArrivo){
     }
 }
 
-void pianificaPercorso(stazione_t *stazione, int idPartenza, int idArrivo){
-    if(idPartenza == idArrivo){
-        printf("%d", idPartenza);
-    } else if(idPartenza < idArrivo) {
-        pianificaDiretto(stazione, idPartenza, idArrivo);
+void pianificaPercorso(station_t *station, int startPoint, int endPoint){
+    if(startPoint == endPoint){
+        printf("%d", startPoint);
+    } else if(startPoint < endPoint) {
+        pianificaDiretto(station, startPoint, endPoint);
     } else {
-        pianificaInverso(stazione, idPartenza, idArrivo);
+        pianificaInverso(station, startPoint, endPoint);
     }
 }
 
 int main(){
     FILE* fp;
-    int i, autonomia, distanza, numAuto, distanzaPartenza, distanzaArrivo;
-    int parcoAuto[MAXA];
-    char comando[20];
+    int i, autonomy, distance, numAuto, startDistance, endDistance;
+    int parkAuto[MAXA];
+    char command[20];
 
     fp = stdin;
     root = NIL;
 
-    while(fscanf(fp, "%s", comando) != EOF){
+    while(fscanf(fp, "%s", command) != EOF){
         for(i=0; i<MAXA; i++){
-            parcoAuto[i] = EMPTY;
+            parkAuto[i] = EMPTY;
         }
-        if (strcmp(comando, "aggiungi-stazione") == 0) {
-            if (fscanf(fp, "%d %d", &distanza, &numAuto) == 2) {
+        if (strcmp(command, "aggiungi-stazione") == 0) {
+            if (fscanf(fp, "%d %d", &distance, &numAuto) == 2) {
                 for (i = 0; i < numAuto; i++) {
-                    if(fscanf(fp, "%d", &parcoAuto[i]) != 1){
+                    if(fscanf(fp, "%d", &parkAuto[i]) != 1){
                         printf("errore lettura input aggiungi-stazione");
                     }
                 }
                 if(root == NULL){
-                    root = createTree(distanza, numAuto, parcoAuto);
+                    root = createTree(distance, numAuto, parkAuto);
                     if(root){
                         printf("aggiunta\n");
                     }
                 } else {
-                    aggiungiStazione(root, distanza, numAuto, parcoAuto);
+                    aggiungiStazione(root, distance, numAuto, parkAuto);
                 }
             } else {
                 printf("errore lettura input aggiungi-stazione");
                 return 0;
             }
         }
-        if(strcmp(comando, "demolisci-stazione") == 0){
-            if(fscanf(fp, "%d", &distanza) != EOF){
-                demolisciStazione(root, distanza);
+        if(strcmp(command, "demolisci-stazione") == 0){
+            if(fscanf(fp, "%d", &distance) != EOF){
+                demolisciStazione(root, distance);
             }
         }
-        if(strcmp(comando, "aggiungi-auto") == 0){
-            if(fscanf(fp, "%d %d", &distanza, &autonomia) == 2){
-                aggiungiAuto(root, distanza, autonomia);
+        if(strcmp(command, "aggiungi-auto") == 0){
+            if(fscanf(fp, "%d %d", &distance, &autonomy) == 2){
+                aggiungiAuto(root, distance, autonomy);
             }
         }
-        if(strcmp(comando, "rottama-auto") == 0){
-            if(fscanf(fp, "%d %d", &distanza, &autonomia) == 2){
-                rottamaAuto(root, distanza, autonomia);
+        if(strcmp(command, "rottama-auto") == 0){
+            if(fscanf(fp, "%d %d", &distance, &autonomy) == 2){
+                rottamaAuto(root, distance, autonomy);
             }
         }
-        if(strcmp(comando, "pianifica-percorso") == 0){
-            if(fscanf(fp, "%d %d", &distanzaPartenza, &distanzaArrivo) == 2){
-                pianificaPercorso(root, distanzaPartenza, distanzaArrivo);
+        if(strcmp(command, "pianifica-percorso") == 0){
+            if(fscanf(fp, "%d %d", &startDistance, &endDistance) == 2){
+                pianificaPercorso(root, startDistance, endDistance);
             }
         }
     }
-    free(root);
-    root = NULL;
+
+    freeBST(root);
+    root = NIL;
 
     return 0;
 }
