@@ -25,7 +25,7 @@ typedef struct node{
 station_t *root;
 station_t *NIL;
 
-/*funzioni bst
+/*bst functions
  *
  *
  *
@@ -39,7 +39,7 @@ station_t *treeSearch(station_t *n, int distance);
 station_t *freeBST(station_t *node);
 void freeNodes(station_t *node);
 
-/*funzioni quicksort
+/*quicksort functions
  *
  *
  *
@@ -49,7 +49,7 @@ void swap(int *x, int *y);
 int partition(int *arr, int min, int max);
 void quickSort(int *arr, int inf, int sup);
 
-/*funzioni della specifica
+/*specs functions
  *
  *
  *
@@ -61,7 +61,7 @@ void aggiungiAuto(station_t *T, int stationId, int autonomy);
 void rottamaAuto(station_t *T, int stationId, int autonomy);
 void pianificaPercorso(station_t *station, int startPoint, int endPoint);
 
-/*funzioni custom
+/*custom functions
  *
  *
  *
@@ -74,7 +74,7 @@ void freeList(ptr_nodo list);
 station_t *minStazOf(station_t *station);
 void transplant(station_t *T, station_t *u, station_t *v);
 
-/*codice
+/*code
  *
  *
  *
