@@ -11,15 +11,14 @@ The aim of this year's project is to develop an efficient algorithm to calculate
   **Tools**: 
   
   </h3>
-  -Valgrind (Memcheck) <br>
-  -Address Sanitizer <br>
-  -GCC <br>
-  -GDB <br>
-<br>
+  - Valgrind (Memcheck) <br>
+  - Address Sanitizer <br>
+  - GCC <br>
+  - GDB <br>
   <h3>
     
-  **Softwares**
+  **Softwares**:
   
-  </h3>:
-  -CLion <br>
+  </h3>
+  - CLion <br>
 </p>
