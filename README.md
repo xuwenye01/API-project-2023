@@ -5,12 +5,21 @@
 The aim of this year's project is to develop an efficient algorithm to calculate the **shortest path between two stations** (which are identified by a positive integer); if multiple minumum paths are found, the program must return **the one with the smallest station identifier**, starting from the end of the path (for a more exhaustive description of the problem, please check the `specs` directory).</p>
 
 <p>
-  Tools:\
-  -Valgrind (Memcheck)\
-  -Address Sanitizer\
-  -GCC\
-  -GDB\
+  
+  <h3> 
 
-  Softwares:\
-  -CLion\
+  **Tools**: 
+  
+  </h3>
+  -Valgrind (Memcheck) <br>
+  -Address Sanitizer <br>
+  -GCC <br>
+  -GDB <br>
+<br>
+  <h3>
+    
+  **Softwares**
+  
+  </h3>:
+  -CLion <br>
 </p>
