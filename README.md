@@ -2,6 +2,4 @@
 
 <p>This repository contains my personal implementation of the final project for the 2023 Algorithm and Data Structures course.
 
-The aim of this year's project is to develop an efficient algorithm to calculate the **shortest path between two stations** (which are identified by a positive integer); if multiple minumum paths are found, the program must return **the one with the smallest station identifier**, starting from the end of the path (for a more exhaustive description of the problem, please check the <k>specs</k> file).</p>
-
-la
+The aim of this year's project is to develop an efficient algorithm to calculate the **shortest path between two stations** (which are identified by a positive integer); if multiple minumum paths are found, the program must return **the one with the smallest station identifier**, starting from the end of the path (for a more exhaustive description of the problem, please check the ```specs``` directory).</p>
